@@ -58,5 +58,13 @@ mediaRouter.delete("/:mediaId", async (req, res, next) => {
     next(error);
   }
 });
+mediaRouter.post("/:mediaId/reviews", async (req, res, next) => {
+  const media = await getMedia();
+  const index = media.findIndex((x) => x.id === req.params.mediaId);
+  const comment = media[index].reviews;
+  comment.push({ ...req.body, creatAt: new Date(), id: uniqid() });
+  await writeMedia(media);
+  res.send("add comment");
+});
 // --------------------------------
 export default mediaRouter;
