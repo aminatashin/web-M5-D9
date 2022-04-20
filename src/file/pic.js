@@ -9,6 +9,7 @@ const picRouter = express.Router();
 const cloudinaryUpload = multer({
   storage: new CloudinaryStorage({ cloudinary, params: { folder: "M5D9" } }),
 }).single("avatar");
+// --------------------------------------
 picRouter.post(
   "/picUpload",
   multer().single("avatar"),

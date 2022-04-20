@@ -1,7 +1,8 @@
 import express from "express";
-import { getMedia, writeMedia } from "../fs-tools/fs.js";
+import { getMedia, writeMedia, upoloadFile } from "../fs-tools/fs.js";
 import uniqid from "uniqid";
 import creatError from "http-errors";
+import multer from "multer";
 // --------------------------------
 const mediaRouter = express.Router();
 // --------------------------------
@@ -30,24 +31,52 @@ mediaRouter.get("/:mediaId", async (req, res, next) => {
     next(creatError(404, "Not Found!!!"));
   }
 });
-mediaRouter.put("/:mediaId", async (req, res, next) => {
-  try {
-    const media = await getMedia();
-    const index = media.findIndex((x) => x.id === req.params.mediaId);
+mediaRouter.put(
+  "/:mediaId",
 
-    const oldMedia = media[index];
-    const updateMedia = {
-      ...oldMedia,
-      ...req.body,
-      updateAt: new Date(),
-    };
-    media[index] = updateMedia;
-    await writeMedia(media);
-    res.send(media);
-  } catch (error) {
-    next(error);
+  async (req, res, next) => {
+    try {
+      const media = await getMedia();
+      const index = media.findIndex((x) => x.id === req.params.mediaId);
+
+      const oldMedia = media[index];
+      const updateMedia = {
+        ...oldMedia,
+        ...req.body,
+        updateAt: new Date(),
+      };
+      media[index] = updateMedia;
+      await writeMedia(media);
+      res.send(media);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
+mediaRouter.put(
+  "/:mediaId/avatar",
+  multer().single("avatar"),
+  upoloadFile,
+  async (req, res, next) => {
+    try {
+      const media = await getMedia();
+      const index = media.findIndex((x) => x.id === req.params.mediaId);
+
+      const oldMedia = media[index];
+      const updateMedia = {
+        ...oldMedia,
+        Poster: req.file,
+        updateAt: new Date(),
+        id: req.params.mediaId,
+      };
+      media[index] = updateMedia;
+      await writeMedia(media);
+      res.send(media);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 mediaRouter.delete("/:mediaId", async (req, res, next) => {
   try {
     const media = await getMedia();
@@ -58,11 +87,14 @@ mediaRouter.delete("/:mediaId", async (req, res, next) => {
     next(error);
   }
 });
-mediaRouter.post("/:mediaId/reviews", async (req, res, next) => {
+mediaRouter.put("/:mediaId/reviews", async (req, res, next) => {
   const media = await getMedia();
   const index = media.findIndex((x) => x.id === req.params.mediaId);
   const comment = media[index].reviews;
-  comment.push({ ...req.body, creatAt: new Date(), id: uniqid() });
+  comment.push({
+    ...req.body,
+    creatAt: new Date(),
+  });
   await writeMedia(media);
   res.send("add comment");
 });
